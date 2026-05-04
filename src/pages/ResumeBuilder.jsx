@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { dummyResumeData } from "../assets/assets";
+import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -12,30 +11,23 @@ import {
   User,
 } from "lucide-react";
 import PersonalInfoForm from "../components/home/PersonalInfoForm";
+import { useAppDispatch, useAppState } from "../context/AppContext.jsx";
+
 const ResumeBuilder = () => {
   const { resumeId } = useParams();
+  const { builder, resumes } = useAppState();
+  const dispatch = useAppDispatch();
 
   const selectedResume = resumeId
-    ? dummyResumeData.find((resume) => resume._id === resumeId)
+    ? resumes.find((resume) => resume._id === resumeId)
     : null;
 
-  const [resumeData, setResumeData] = useState({
-    _id: "",
-    title: "",
-    personal_info: {},
-    prfessional_summary: "",
-    experience: [],
-    education: [],
-    projects: [],
-    skills: [],
-    template: "classic",
-    accent_color: "#3B82F6",
-    public: false,
-    ...selectedResume,
-  });
-
-  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const [removeBackground, setRemoveBackground] = useState(false);
+  useEffect(() => {
+    dispatch({
+      type: "INITIALIZE_BUILDER",
+      payload: { resume: selectedResume },
+    });
+  }, [dispatch, selectedResume]);
 
   const sections = [
     { id: "personal", name: "Personal Info", Icon: User },
@@ -45,7 +37,7 @@ const ResumeBuilder = () => {
     { id: "skills", name: "Skills", Icon: Sparkles },
   ];
 
-  const activeSection = sections[activeSectionIndex];
+  const activeSection = sections[builder.activeSectionIndex];
 
   return (
     <div>
@@ -61,71 +53,75 @@ const ResumeBuilder = () => {
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-8">
         <div className="grid lg:grid-cols-12 gap-8">
-          {/* Left panel - form */}
           <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 pt-1">
-              {/* progress bar using activeSectionIndex */}
               <hr className="absolute top-0 left-0 right-0 border-2 border-gray-200" />
               <hr
-                className="absolute top-0 left-0 h-1 bg-linear-to-r from-green-500 to bg-green-600
-              border-none transition-all duration-2000"
+                className="absolute top-0 left-0 h-1 bg-linear-to-r from-green-500 to bg-green-600 border-none transition-all duration-2000"
                 style={{
-                  width: `${(activeSectionIndex * 100) / sections.length - 1}%`,
+                  width: `${(builder.activeSectionIndex * 100) / sections.length - 1}%`,
                 }}
               />
-              {/* Section Navigation */}
               <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
                 <div></div>
                 <div className="flex items-center">
-                  {activeSectionIndex !== 0 && (
+                  {builder.activeSectionIndex !== 0 && (
                     <button
                       onClick={() =>
-                        setActiveSectionIndex((prevIndex) =>
-                          Math.max(prevIndex - 1, 0),
-                        )
+                        dispatch({
+                          type: "SET_ACTIVE_SECTION",
+                          payload: Math.max(builder.activeSectionIndex - 1, 0),
+                        })
                       }
-                      className="flex items-center gap-1 p-3 rounded-lg
-                    text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
-                      disabled={activeSectionIndex === 0}
+                      className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+                      disabled={builder.activeSectionIndex === 0}
                     >
                       <ChevronLeft className="size-4" /> Previous
                     </button>
                   )}
                   <button
                     onClick={() =>
-                      setActiveSectionIndex((prevIndex) =>
-                        Math.min(prevIndex + 1, sections.length - 1),
-                      )
+                      dispatch({
+                        type: "SET_ACTIVE_SECTION",
+                        payload: Math.min(builder.activeSectionIndex + 1, sections.length - 1),
+                      })
                     }
-                    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium
-                   text-gray-600 hover:bg-gray-50 transition-all ${activeSectionIndex === sections.length - 1 && "opacity-50"}`}
-                    disabled={activeSectionIndex === sections.length - 1}
+                    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${builder.activeSectionIndex === sections.length - 1 && "opacity-50"}`}
+                    disabled={builder.activeSectionIndex === sections.length - 1}
                   >
                     Next <ChevronRight className="size-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Form Content */}
               <div className="space-y-6">
                 {activeSection.id === "personal" && (
                   <PersonalInfoForm
-                    data={resumeData.personal_info}
+                    data={builder.draftResume.personal_info}
                     onChange={(data) =>
-                      setResumeData((prev) => ({
-                        ...prev,
-                        personal_info: data,
-                      }))
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: {
+                          personal_info: data,
+                        },
+                      })
                     }
-                    removeBackground={removeBackground}
-                    setRemoveBackground={setRemoveBackground}
+                    removeBackground={builder.removeBackground}
+                    setRemoveBackground={(value) =>
+                      dispatch({
+                        type: "SET_REMOVE_BACKGROUND",
+                        payload:
+                          typeof value === "function"
+                            ? value(builder.removeBackground)
+                            : value,
+                      })
+                    }
                   />
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right panel - resume preview */}
           <div></div>
         </div>
       </div>
