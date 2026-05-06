@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import PersonalInfoForm from "../components/home/PersonalInfoForm";
 import { useAppDispatch, useAppState } from "../context/AppContext.jsx";
+import ResumePreview from "../components/home/ResumePreview.jsx";
+import TemplateSelector from "../components/home/TemplateSelector.jsx";
+import ColorPicker from "../components/home/ColorPicker.jsx";
+import ProfessionalSummaryForm from "../components/home/ProfessionalSummaryForm.jsx";
 
 const ResumeBuilder = () => {
   const { resumeId } = useParams();
@@ -31,6 +35,7 @@ const ResumeBuilder = () => {
 
   const sections = [
     { id: "personal", name: "Personal Info", Icon: User },
+    { id: "summary", name: "Professional Summary", Icon: Sparkles },
     { id: "experience", name: "Experience", Icon: Briefcase },
     { id: "education", name: "Education", Icon: GraduationCap },
     { id: "projects", name: "Projects", Icon: FolderIcon },
@@ -62,9 +67,29 @@ const ResumeBuilder = () => {
                   width: `${(builder.activeSectionIndex * 100) / sections.length - 1}%`,
                 }}
               />
+              {/* =========================Section Navigation ============ */}
               <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
-                <div></div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <TemplateSelector
+                    selectedTemplate={builder.draftResume.template}
+                    onChange={(template) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { template },
+                      })
+                    }
+                  />
+                  <ColorPicker
+                    selectedColor={builder.draftResume.accent_color}
+                    onChange={(color) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { accent_color: color },
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex  items-center gap-2">
                   {builder.activeSectionIndex !== 0 && (
                     <button
                       onClick={() =>
@@ -83,11 +108,16 @@ const ResumeBuilder = () => {
                     onClick={() =>
                       dispatch({
                         type: "SET_ACTIVE_SECTION",
-                        payload: Math.min(builder.activeSectionIndex + 1, sections.length - 1),
+                        payload: Math.min(
+                          builder.activeSectionIndex + 1,
+                          sections.length - 1,
+                        ),
                       })
                     }
                     className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${builder.activeSectionIndex === sections.length - 1 && "opacity-50"}`}
-                    disabled={builder.activeSectionIndex === sections.length - 1}
+                    disabled={
+                      builder.activeSectionIndex === sections.length - 1
+                    }
                   >
                     Next <ChevronRight className="size-4" />
                   </button>
@@ -118,11 +148,32 @@ const ResumeBuilder = () => {
                     }
                   />
                 )}
+                {activeSection.id === "summary" && (
+                  <ProfessionalSummaryForm
+                    data={builder.draftResume.professional_summary}
+                    onChange={(data) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { professional_summary: data },
+                      })
+                    }
+                    setResumeData={dispatch}
+                  />
+                )}
               </div>
             </div>
           </div>
-
-          <div></div>
+          {/* Right Panel - Preview  */}
+          <div className="lg:col-span-7 max-lg:mt-6">
+            <div>{/* -------------- buttons ----------------- */}</div>
+            {builder.draftResume && (
+              <ResumePreview
+                data={builder.draftResume}
+                template={builder.draftResume.template}
+                accentColor={builder.draftResume.accent_color}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
