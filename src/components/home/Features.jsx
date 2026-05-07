@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: Features.
 import React from 'react';
 import { Zap } from 'lucide-react'; 
 import Title from './Title';

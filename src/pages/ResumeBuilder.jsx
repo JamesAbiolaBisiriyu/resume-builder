@@ -1,3 +1,4 @@
+// File Purpose: Route-level page component for the ResumeBuilder screen.
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -16,6 +17,9 @@ import ResumePreview from "../components/home/ResumePreview.jsx";
 import TemplateSelector from "../components/home/TemplateSelector.jsx";
 import ColorPicker from "../components/home/ColorPicker.jsx";
 import ProfessionalSummaryForm from "../components/home/ProfessionalSummaryForm.jsx";
+import ExperienceForm from "../components/home/ExperienceForm.jsx";
+import EducationForm from "../components/home/EducationForm.jsx";
+import ProjectForm from "../components/home/ProjectForm.jsx";
 
 const ResumeBuilder = () => {
   const { resumeId } = useParams();
@@ -158,6 +162,42 @@ const ResumeBuilder = () => {
                       })
                     }
                     setResumeData={dispatch}
+                  />
+                )}
+                {activeSection.id === "experience" && (
+                  <ExperienceForm
+                    data={builder.draftResume.experience}
+                    onChange={(data) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { experience: data },
+                      })
+                    }
+                    // setResumeData={dispatch}
+                  />
+                )}
+                {activeSection.id === "education" && (
+                  <EducationForm
+                    data={builder.draftResume.education}
+                    onChange={(data) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { education: data },
+                      })
+                    }
+                    // setResumeData={dispatch}
+                  />
+                )}
+                {activeSection.id === "projects" && (
+                  <ProjectForm
+                    data={builder.draftResume.projects}
+                    onChange={(data) =>
+                      dispatch({
+                        type: "UPDATE_DRAFT_RESUME",
+                        payload: { projects: data },
+                      })
+                    }
+                    // setResumeData={dispatch}
                   />
                 )}
               </div>

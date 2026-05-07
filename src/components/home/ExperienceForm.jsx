@@ -1,4 +1,5 @@
-import { Briefcase, Plus } from "lucide-react";
+// File Purpose: Home and resume-builder UI section component: ExperienceForm.
+import { Briefcase, Plus, Sparkles } from "lucide-react";
 import { Trash2 } from "lucide-react";
 
 const ExperienceForm = ({data, onChange}) => {
@@ -37,7 +38,7 @@ const ExperienceForm = ({data, onChange}) => {
         </div>
         <button 
           onClick={() => addExperience()} // Added missing function call
-          className="flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+          className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-purple-200 transition-colors"
         >
           <Plus className="size-4" /> {/* Fixed className prop */}
           Add Experience
@@ -60,6 +61,41 @@ const ExperienceForm = ({data, onChange}) => {
                   transition-colors">
                   <Trash2 className="size-4" />
                 </button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <input value={experience.company || ""} onChange={(e)=>updateExperience(index, "comapny", e.target.value)} type="text" placeholder="Company Name" className="px-3 py-2
+                text-sm rounded-lg" />
+
+                 <input value={experience.position || ""} onChange={(e)=>updateExperience(index, "position", e.target.value)} type="text" placeholder="Job Title" className="px-3 py-2
+                text-sm rounded-lg" />
+
+                 <input value={experience.start_date || ""} onChange={(e)=>updateExperience(index, "start_date", e.target.value)} type="month" className="px-3 py-2
+                text-sm rounded-lg" />
+
+                
+                 <input value={experience.end_date || ""} onChange={(e)=>updateExperience(index, "end_date", e.target.value)} type="month" disabled={experience.is_current} 
+                 className="px-3 py-2
+                text-sm rounded-lg disabled:bg-gray-100" />
+              </div>
+              <label className="flex items-centers gap-2">
+                <input type="checkbox" checked={experience.is_current || false} onChange={(e)=>{updateExperience(index, "is_current", e.target.checked ? true : false);}}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                <span className="text-sm text-gray-700">
+                Currently working here
+                </span>
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label> Job Description</label>
+                  <button className="flex items-center gap-1 px-2 py-1
+                  text-xs bg-purple-100 text-purple-700 rounded-2xl
+                  hover:bg-purple-200 transition-colors disabled:opacity-50">
+                    <Sparkles className="w-3 h-3"/>
+                    Enhance with AI
+                  </button>
+                </div>
+                <textarea value={experience.description || ""} onChange={(e)=>updateExperience(index, "description", e.target.value)} rows={4} className="w-full text-sm px-3 py-2 rounded-lg resize-none
+                " placeholder="Describe your key responsibilities and achievements..." />
               </div>
             </div>
           ))}

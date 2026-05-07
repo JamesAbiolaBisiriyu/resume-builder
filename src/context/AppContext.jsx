@@ -1,3 +1,4 @@
+// File Purpose: Centralized state container and reducer logic for resume builder flows.
 import { createContext, useContext, useReducer } from "react";
 import { dummyResumeData } from "../assets/assets";
 
@@ -11,7 +12,7 @@ const createEmptyResume = () => ({
   professional_summary: "",
   experience: [],
   education: [],
-  project: [],
+  projects: [],
   skills: [],
   template: "classic",
   accent_color: "#3B82F6",
@@ -26,7 +27,7 @@ const normalizeResume = (resume = {}) => ({
   personal_info: { ...(resume.personal_info || {}) },
   experience: Array.isArray(resume.experience) ? resume.experience : [],
   education: Array.isArray(resume.education) ? resume.education : [],
-  project: Array.isArray(resume.project) ? resume.project : [],
+  projects: Array.isArray(resume.projects) ? resume.projects : [],
   skills: Array.isArray(resume.skills) ? resume.skills : [],
   professional_summary: resume.professional_summary || "",
 });

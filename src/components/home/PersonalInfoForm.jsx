@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: PersonalInfoForm.
 import { BriefcaseBusiness, Globe, Mail, MapPin, Phone, User, } from "lucide-react";
 const PersonalInfoForm = ({
   data,

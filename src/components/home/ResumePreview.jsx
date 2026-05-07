@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: ResumePreview.
 
 import ClassicTemplate from '../templates/ClassicTemplate'
 import ModernTemplate from '../templates/ModernTemplate'

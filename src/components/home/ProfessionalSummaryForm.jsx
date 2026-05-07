@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: ProfessionalSummaryForm.
 import { Sparkles } from "lucide-react";
 const ProfessionalSummaryForm = ({data, onChange, setResumeData}) => {
   return (

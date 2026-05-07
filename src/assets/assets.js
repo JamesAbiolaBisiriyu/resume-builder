@@ -1,3 +1,4 @@
+// File Purpose: Static assets and template metadata used by the UI.
 import dummy_profile from './dummy_profile.png'
 
 export const dummyResumeData = [

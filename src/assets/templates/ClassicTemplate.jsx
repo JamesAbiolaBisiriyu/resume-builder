@@ -1,3 +1,4 @@
+// File Purpose: Asset-side template variant for rendering resume data in the ClassicTemplate style.
 import { Mail, Phone, MapPin, Link, Globe } from "lucide-react";
 
 const ClassicTemplate = ({ data, accentColor }) => {
@@ -13,7 +14,7 @@ const ClassicTemplate = ({ data, accentColor }) => {
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white text-gray-800 leading-relaxed">
       {/* Header */}
-      <header
+        {data.projects && data.projects.length > 0 && (
         className="text-center mb-8 pb-6 border-b-2"
         style={{ borderColor: accentColor }}
       >
@@ -22,7 +23,7 @@ const ClassicTemplate = ({ data, accentColor }) => {
         </h1>
 
         <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
-          {data.personal_info?.email && (
+            {data.projects.map((proj, index) => (
             <div className="flex items-center gap-1">
               <Mail className="size-4" />
               <span>{data.personal_info.email}</span>
@@ -113,7 +114,7 @@ const ClassicTemplate = ({ data, accentColor }) => {
       )}
 
       {/* Projects */}
-      {data.project && data.project.length > 0 && (
+      {data.projects && data.projects.length > 0 && (
         <section className="mb-6">
           <h2
             className="text-xl font-semibold mb-4"
@@ -123,7 +124,7 @@ const ClassicTemplate = ({ data, accentColor }) => {
           </h2>
 
           <ul className="space-y-3 ">
-            {data.project.map((proj, index) => (
+            {data.projects.map((proj, index) => (
               <div
                 key={index}
                 className="flex justify-between items-start border-l-3 border-gray-300 pl-6"

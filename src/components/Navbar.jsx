@@ -1,3 +1,4 @@
+// File Purpose: Reusable UI component: Navbar.
 import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {

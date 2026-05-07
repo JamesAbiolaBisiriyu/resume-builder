@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: CallToAction.
 
 const CallToAction = () => {
   return (

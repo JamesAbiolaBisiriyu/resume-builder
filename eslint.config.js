@@ -1,3 +1,4 @@
+// File Purpose: ESLint configuration for lint rules and code quality checks.
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

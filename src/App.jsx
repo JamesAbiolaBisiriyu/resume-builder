@@ -1,3 +1,4 @@
+// File Purpose: Top-level route composition and app shell wiring.
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Layout from './pages/Layout'

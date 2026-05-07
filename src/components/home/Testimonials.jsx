@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: Testimonials.
 import Title from "./Title";
 import { BookUserIcon } from "lucide-react";
 const Testimonials = () => {

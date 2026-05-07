@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: ColorPicker.
 import { useState } from "react";
 import { Check, Palette } from "lucide-react";
 

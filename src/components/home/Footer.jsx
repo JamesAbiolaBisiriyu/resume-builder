@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: Footer.
 // import logo from "../../assets/templates/logo.svg";
 import Logo1 from "../../assets/Logo1.png";
 

@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: Hero.
 import  React  from "react";
 import { Link } from "react-router-dom";
 const Hero = () => {

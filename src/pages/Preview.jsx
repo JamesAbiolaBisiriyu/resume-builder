@@ -1,3 +1,4 @@
+// File Purpose: Route-level page component for the Preview screen.
 
 const Preview = () => {
   return (

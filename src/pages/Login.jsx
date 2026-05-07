@@ -1,3 +1,4 @@
+// File Purpose: Route-level page component for the Login screen.
 import { Lock, User2Icon } from 'lucide-react'
 import React from 'react'
 import { Mail } from 'lucide-react'

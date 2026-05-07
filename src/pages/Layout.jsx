@@ -1,3 +1,4 @@
+// File Purpose: Route-level page component for the Layout screen.
 import { Outlet } from "react-router-dom"
 import Navbar from "../components/Navbar"
 

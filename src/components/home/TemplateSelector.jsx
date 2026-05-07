@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: TemplateSelector.
 import React, { useState } from "react";
 import { Check, Layout } from "lucide-react";
 

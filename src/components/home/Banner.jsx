@@ -1,3 +1,4 @@
+// File Purpose: Home and resume-builder UI section component: Banner.
 
 const Banner = () => {
     return (

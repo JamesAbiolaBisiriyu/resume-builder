@@ -1,3 +1,4 @@
+// File Purpose: Route-level page component for the Dashboard screen.
 import {
   FilePenLineIcon,
   PlusIcon,
