@@ -14,11 +14,12 @@ const EducationForm = ({ data = [], onChange }) => {
   };
 
   const removeEducation = (index) => {
-    const updated = data.filter((_, i) => i !== index);
+    const updated = data.filter((_, i) => i !== index);    
     onChange(updated);
   };
 
   const updateEducation = (index, field, value) => {
+    
     const updated = [...data];
     updated[index] = { ...updated[index], [field]: value };
     onChange(updated);
@@ -105,7 +106,7 @@ const EducationForm = ({ data = [], onChange }) => {
                   onChange={(e) =>
                     updateEducation(index, "graduation_date", e.target.value)
                   }
-                  type="month"
+                  type="date"
                   className="px-3 py-2
                 text-sm "
                 />

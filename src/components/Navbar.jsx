@@ -1,12 +1,18 @@
 // File Purpose: Reusable UI component: Navbar.
+import { useSelector,useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../app/features/authSlice.js"
+
 
 const Navbar = () => {
-  const user = {name: 'John doe'}
+  const { user } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+
   const navigate = useNavigate()
 
   const logoutUser = () => {
-    navigate = useNavigate();
+    navigate('/')
+    dispatch(logout())
   }
 
   return (
@@ -19,8 +25,12 @@ const Navbar = () => {
         <div className="flex items-center gap-4 text-sm">
           
           <p className="max-sm:hidden">Hi, {user?.name}</p>
-          <button className="bg-white hover:bg-slate-50 border border-gray-300 px-7 py-1.5
-          rounded-full active:scale-95 transition-all">Logout</button>
+          <button
+            onClick={logoutUser}
+            className="bg-white hover:bg-slate-50 border border-gray-300 px-7 py-1.5 rounded-full active:scale-95 transition-all"
+              >
+              Logout
+            </button>
         </div>
       </nav>
       

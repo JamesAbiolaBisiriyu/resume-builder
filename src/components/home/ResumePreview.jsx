@@ -4,7 +4,7 @@ import ClassicTemplate from '../templates/ClassicTemplate'
 import ModernTemplate from '../templates/ModernTemplate'
 import MinimalTemplate from '../templates/MinimalTemplate'
 import MinimalImageTemplate from '../templates/MinimalImageTemplate'
-const ResumePreview = ({data, template, accentColor, classes = ""}) => {
+const ResumePreview = ({data, template, accentColor, classes = "", previewId = "resume-preview"}) => {
 
 
   const renderTemplate = ()=> {
@@ -24,7 +24,7 @@ const ResumePreview = ({data, template, accentColor, classes = ""}) => {
 
   return (
     <div className="max-w-full bg-gray-100">
-      <div id ="resume-preview" className= {" border border-gray-200 print:shadow-none :print:border-none" 
+      <div id={previewId} className={" border border-gray-200 print:shadow-none print:border-none" 
         + classes}>
           {renderTemplate()}
       </div> 
@@ -43,10 +43,10 @@ const ResumePreview = ({data, template, accentColor, classes = ""}) => {
             body * {
             visibility: hidden;
             }
-            #resume-preview, #resume-preview * {
+            #${previewId}, #${previewId} * {
               visibility: visible;
             }
-            #resume-preview {
+            #${previewId} {
                 position: absolute;
                   left: 0;
                   top: 0;

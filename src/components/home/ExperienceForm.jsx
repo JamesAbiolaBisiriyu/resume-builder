@@ -1,8 +1,82 @@
-// File Purpose: Home and resume-builder UI section component: ExperienceForm.
-import { Briefcase, Plus, Sparkles } from "lucide-react";
-import { Trash2 } from "lucide-react";
 
-const ExperienceForm = ({data, onChange}) => {
+
+// File Purpose: Home and resume-builder UI section component: ExperienceForm.
+import { useState } from "react";
+import { Briefcase, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import api from "../../configs/api";
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 40 }, (_, i) => currentYear - i);
+
+const parseDateValue = (val = "") => {
+  const [year = "", month = ""] = val.split("-");
+  return { year, month };
+};
+
+const buildDateValue = (year, month) => {
+  if (!year || !month) return "";
+  return `${year}-${month}`;
+};
+
+const DateSelect = ({ value, onChange, disabled }) => {
+  const { year, month } = parseDateValue(value);
+
+  const handleChange = (field, newVal) => {
+    const updated =
+      field === "year"
+        ? buildDateValue(newVal, month)
+        : buildDateValue(year, newVal);
+    onChange(updated);
+  };
+
+  const selectClass =
+    "px-2 py-2 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-100 disabled:cursor-not-allowed";
+
+  return (
+    <div className="flex gap-2">
+      <select
+        value={month}
+        onChange={(e) => handleChange("month", e.target.value)}
+        disabled={disabled}
+        className={`${selectClass} flex-1`}
+      >
+        <option value="">Month</option>
+        {MONTHS.map((m, i) => {
+          const val = String(i + 1).padStart(2, "0");
+          return (
+            <option key={val} value={val}>
+              {m}
+            </option>
+          );
+        })}
+      </select>
+      <select
+        value={year}
+        onChange={(e) => handleChange("year", e.target.value)}
+        disabled={disabled}
+        className={`${selectClass} w-28`}
+      >
+        <option value="">Year</option>
+        {YEARS.map((y) => (
+          <option key={y} value={y}>
+            {y}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
+const ExperienceForm = ({ data, onChange }) => {
+  const { token } = useSelector((state) => state.auth);
+  const [enhancingIndex, setEnhancingIndex] = useState(null);
 
   const addExperience = () => {
     const newExperience = {
@@ -14,18 +88,49 @@ const ExperienceForm = ({data, onChange}) => {
       is_current: false,
     };
     onChange([...data, newExperience]);
-  } // Removed extra closing brace here
+  };
 
   const removeExperience = (index) => {
-    const updated = data.filter((_, i)=> i !== index);
+    const updated = data.filter((_, i) => i !== index);
     onChange(updated);
-  }
+  };
 
   const updateExperience = (index, field, value) => {
     const updated = [...data];
-    updated[index] = {...updated[index], [field]: value};
+    updated[index] = { ...updated[index], [field]: value };
     onChange(updated);
-  }
+  };
+
+  const enhanceDescription = async (index) => {
+    const currentDescription = data[index]?.description?.trim();
+
+    if (!currentDescription) {
+      toast.error("Add a job description first");
+      return;
+    }
+
+    try {
+      setEnhancingIndex(index);
+
+      const prompt = `Enhance this job description for a resume:\n\n${currentDescription}`;
+      const { data: responseData } = await api.post(
+        "/api/ai/enhance-job-desc",
+        { userContent: prompt },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      updateExperience(index, "description", responseData.enhancedContent || "");
+      toast.success("Job description enhanced");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
+      setEnhancingIndex(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -34,68 +139,127 @@ const ExperienceForm = ({data, onChange}) => {
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
             Professional Experience
           </h3>
-          <p className="text-sm text-gray-500">Add your job experience details here</p>
+          <p className="text-sm text-gray-500">
+            Add your job experience details here
+          </p>
         </div>
-        <button 
-          onClick={() => addExperience()} // Added missing function call
+        <button
+          type="button"
+          onClick={() => addExperience()}
           className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-purple-200 transition-colors"
         >
-          <Plus className="size-4" /> {/* Fixed className prop */}
+          <Plus className="size-4" />
           Add Experience
         </button>
       </div>
+
       {data.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <Briefcase className="w-12 h-12 mx-auto mb-3 text-gray-300"/>
+          <Briefcase className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p>No work experience added yet</p>
-          <p className="text-sm">Click "Add Experiernce" to get started. </p>
+          <p className="text-sm">Click "Add Experience" to get started.</p>
         </div>
-      ):(
+      ) : (
         <div className="space-y-4">
-          {data.map((experience, index)=> (
-            <div key={index} className="p-4 border border-gray-200 rounded-lg
-            space-y-3">
+          {data.map((experience, index) => (
+            <div
+              key={index}
+              className="p-4 border border-gray-200 rounded-lg space-y-3"
+            >
               <div className="flex justify-between items-start">
-                <h4> Experience #{index + 1}</h4>
-                <button onClick={()=> removeExperience(index)} className="text-red-500 hover:text-red-700
-                  transition-colors">
+                <h4>Experience #{index + 1}</h4>
+                <button
+                  type="button"
+                  onClick={() => removeExperience(index)}
+                  className="text-red-500 hover:text-red-700 transition-colors"
+                >
                   <Trash2 className="size-4" />
                 </button>
               </div>
+
               <div className="grid md:grid-cols-2 gap-3">
-                <input value={experience.company || ""} onChange={(e)=>updateExperience(index, "comapny", e.target.value)} type="text" placeholder="Company Name" className="px-3 py-2
-                text-sm rounded-lg" />
+                <input
+                  value={experience.company || ""}
+                  onChange={(e) =>
+                    updateExperience(index, "company", e.target.value)
+                  }
+                  type="text"
+                  placeholder="Company Name"
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-200"
+                />
 
-                 <input value={experience.position || ""} onChange={(e)=>updateExperience(index, "position", e.target.value)} type="text" placeholder="Job Title" className="px-3 py-2
-                text-sm rounded-lg" />
+                <input
+                  value={experience.position || ""}
+                  onChange={(e) =>
+                    updateExperience(index, "position", e.target.value)
+                  }
+                  type="text"
+                  placeholder="Job Title"
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-200"
+                />
 
-                 <input value={experience.start_date || ""} onChange={(e)=>updateExperience(index, "start_date", e.target.value)} type="month" className="px-3 py-2
-                text-sm rounded-lg" />
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Start Date</label>
+                  <DateSelect
+                    value={experience.start_date || ""}
+                    onChange={(val) =>
+                      updateExperience(index, "start_date", val)
+                    }
+                  />
+                </div>
 
-                
-                 <input value={experience.end_date || ""} onChange={(e)=>updateExperience(index, "end_date", e.target.value)} type="month" disabled={experience.is_current} 
-                 className="px-3 py-2
-                text-sm rounded-lg disabled:bg-gray-100" />
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">End Date</label>
+                  <DateSelect
+                    value={experience.end_date || ""}
+                    onChange={(val) =>
+                      updateExperience(index, "end_date", val)
+                    }
+                    disabled={experience.is_current}
+                  />
+                </div>
               </div>
-              <label className="flex items-centers gap-2">
-                <input type="checkbox" checked={experience.is_current || false} onChange={(e)=>{updateExperience(index, "is_current", e.target.checked ? true : false);}}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={experience.is_current || false}
+                  onChange={(e) =>
+                    updateExperience(index, "is_current", e.target.checked)
+                  }
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
                 <span className="text-sm text-gray-700">
-                Currently working here
+                  Currently working here
                 </span>
               </label>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label> Job Description</label>
-                  <button className="flex items-center gap-1 px-2 py-1
-                  text-xs bg-purple-100 text-purple-700 rounded-2xl
-                  hover:bg-purple-200 transition-colors disabled:opacity-50">
-                    <Sparkles className="w-3 h-3"/>
-                    Enhance with AI
+                  <label className="text-sm text-gray-700">Job Description</label>
+                  <button
+                    type="button"
+                    onClick={() => enhanceDescription(index)}
+                    disabled={enhancingIndex === index}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-2xl hover:bg-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {enhancingIndex === index ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3" />
+                    )}
+                    {enhancingIndex === index ? "Enhancing..." : "Enhance with AI"}
                   </button>
                 </div>
-                <textarea value={experience.description || ""} onChange={(e)=>updateExperience(index, "description", e.target.value)} rows={4} className="w-full text-sm px-3 py-2 rounded-lg resize-none
-                " placeholder="Describe your key responsibilities and achievements..." />
+                <textarea
+                  value={experience.description || ""}
+                  onChange={(e) =>
+                    updateExperience(index, "description", e.target.value)
+                  }
+                  rows={4}
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 resize-none"
+                  placeholder="Describe your key responsibilities and achievements..."
+                />
               </div>
             </div>
           ))}
@@ -103,6 +267,7 @@ const ExperienceForm = ({data, onChange}) => {
       )}
     </div>
   );
-}
+};
 
 export default ExperienceForm;
+

@@ -7,103 +7,189 @@ import {
   PencilIcon,
   XIcon,
   UploadCloud,
+  LoaderCircleIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppState } from "../context/AppContext.jsx";
+import { useAppDispatch, useAppState } from "../context/hooks";
+import { useSelector } from "react-redux";
+import api from "../configs/api";
+import toast from "react-hot-toast";
+import pdfToText from "react-pdftotext";
+import { useState, useEffect, useCallback } from "react";
 
 const Dashboard = () => {
+  const { user, token } = useSelector((state) => state.auth);
+  // console.log("TOKEN:", token);
+
   const colors = ["#9333ea", "#d97706", "#dc2626", "#0284c7", "#16a34a"];
   const { resumes, dashboard } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const createResume = (event) => {
+  const loadAllResumes = useCallback(async () => {
+    try {
+      const { data } = await api.get("/api/users/resumes", {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      dispatch({
+        type: "SET_RESUMES",
+        payload: data.resumes.map((resume) => ({
+          ...resume,
+          personal_info: { ...(resume.personal_info || {}) },
+          experience: Array.isArray(resume.experience) ? resume.experience : [],
+          education: Array.isArray(resume.education) ? resume.education : [],
+          projects: Array.isArray(resume.projects) ? resume.projects : [],
+          skills: Array.isArray(resume.skills) ? resume.skills : [],
+          professional_summary: resume.professional_summary || "",
+        })),
+      });
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
+  }, [dispatch, token]);
+
+  useEffect(() => {
+    if (token) {
+      loadAllResumes();
+    }
+  }, [token, loadAllResumes]);
+
+  const createResume = async (event) => {
     event.preventDefault();
 
-    if (!dashboard.createTitle.trim()) return;
+    const title = dashboard.createTitle.trim();
+    if (!title) return;
 
-    const now = new Date().toISOString();
-    const newResume = {
-      _id: `res-${Date.now()}`,
-      title: dashboard.createTitle.trim(),
-      personal_info: {},
-      professional_summary: "",
-      experience: [],
-      education: [],
-      project: [],
-      skills: [],
-      template: "classic",
-      accent_color: "#3B82F6",
-      public: false,
-      createdAt: now,
-      updatedAt: now,
-    };
+    try {
+      const { data } = await api.post(
+        "/api/resumes/create",
+        { title },
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        },
+      );
 
-    dispatch({ type: "ADD_RESUME", payload: newResume });
-    dispatch({ type: "CLOSE_CREATE_MODAL" });
-    navigate(`/app/builder/${newResume._id}`);
+      const newResume = data.resume;
+
+      dispatch({ type: "ADD_RESUME", payload: newResume });
+      dispatch({ type: "CLOSE_CREATE_MODAL" });
+
+      navigate(`/app/builder/${newResume._id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
   };
 
-  const uploadResume = (event) => {
+  const uploadResume = async (event) => {
     event.preventDefault();
 
-    if (!dashboard.uploadTitle.trim()) return;
+    const file = dashboard.uploadFile;
 
-    const now = new Date().toISOString();
-    const newResume = {
-      _id: `res-${Date.now()}`,
-      title: dashboard.uploadTitle.trim(),
-      personal_info: {},
-      professional_summary: "",
-      experience: [],
-      education: [],
-      project: [],
-      skills: [],
-      template: "classic",
-      accent_color: "#3B82F6",
-      public: false,
-      createdAt: now,
-      updatedAt: now,
-    };
+    if (!file) {
+      toast.error("Please select a resume file");
+      return;
+    }
 
-    dispatch({ type: "ADD_RESUME", payload: newResume });
-    dispatch({ type: "CLOSE_UPLOAD_MODAL" });
-    navigate(`/app/builder/${newResume._id}`);
+    setIsLoading(true);
+
+    try {
+      const resumeText = await pdfToText(file);
+
+      const { data } = await api.post(
+        "/api/ai/upload-resume",
+        {
+          title: dashboard.uploadTitle,
+          resumeText,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      dispatch({ type: "CLOSE_UPLOAD_MODAL" });
+      dispatch({ type: "SET_UPLOAD_FILE", payload: null });
+      dispatch({ type: "SET_UPLOAD_TITLE", payload: "" });
+
+      navigate(`/app/builder/${data.resumeId}`);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const editTitle = (event) => {
+  const editTitle = async (event) => {
     event.preventDefault();
 
     if (!dashboard.editResumeId || !dashboard.editTitle.trim()) return;
 
-    dispatch({
-      type: "UPDATE_RESUME_TITLE",
-      payload: {
-        resumeId: dashboard.editResumeId,
-        title: dashboard.editTitle.trim(),
-      },
-    });
-    dispatch({ type: "CLOSE_EDIT_MODAL" });
+    try {
+      const { data } = await api.put(
+        "/api/resumes/update",
+        {
+          resumeId: dashboard.editResumeId,
+          resumeData: {
+            title: dashboard.editTitle.trim(),
+          },
+        },
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        },
+      );
+
+      dispatch({
+        type: "UPDATE_RESUME",
+        payload: data.resume,
+      });
+
+      dispatch({ type: "CLOSE_EDIT_MODAL" });
+
+      toast.success(data.message || "Resume updated successfully");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
   };
 
-  const deleteResume = (resumeId) => {
+  const deleteResume = async (resumeId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this resume?",
     );
 
-    if (confirmDelete) {
-      dispatch({ type: "DELETE_RESUME", payload: resumeId });
+    if (!confirmDelete) return;
+
+    try {
+      const { data } = await api.delete(`/api/resumes/delete/${resumeId}`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      dispatch({
+        type: "DELETE_RESUME",
+        payload: resumeId,
+      });
+
+      toast.success(data.message || "Resume deleted successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
   return (
     <div>
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p
-          className="text-2xl font-medium mb-6 bg-linear-to-r from-slate-600 to-slate-700
-      bg-clip-text text-transparent sm:hidden"
-        >
-          Welcome Joe Doe
+        <p className="text-2xl font-medium mb-6 bg-linear-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent sm:hidden">
+          Welcome {user?.name || "User"}
         </p>
 
         <div className="flex gap-4">
@@ -180,17 +266,17 @@ const Dashboard = () => {
                 </p>
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-1 right-1 group-hover:flex items-center hidden"
+                  className="absolute top-1 right-1 flex items-center gap-1 rounded-md bg-white/80 p-1 shadow-sm backdrop-blur-sm"
                 >
                   <TrashIcon
                     onClick={() => deleteResume(resume._id)}
-                    className="size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors"
+                    className="size-7 p-1.5 hover:bg-white rounded text-slate-700 transition-colors"
                   />
                   <PencilIcon
                     onClick={() =>
                       dispatch({ type: "OPEN_EDIT_MODAL", payload: resume })
                     }
-                    className="size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors"
+                    className="size-7 p-1.5 hover:bg-white rounded text-slate-700 transition-colors"
                   />
                 </div>
               </button>
@@ -225,7 +311,10 @@ const Dashboard = () => {
                 required
               />
 
-              <button className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+              <button
+                type="submit"
+                className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              >
                 Create Resume
               </button>
               <XIcon
@@ -302,8 +391,18 @@ const Dashboard = () => {
                 />
               </div>
 
-              <button className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
-                Upload Resume
+              <button
+                disabled={isLoading}
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {/* {isLoading ? "Uploading..." : "Upload Resume"} */}
+                {isLoading && (
+                  <LoaderCircleIcon className="animate-spin size-4 text-white " />
+                )}
+                {isLoading ? "uploading..." : "Upload Resume"}
+                Upload resume
               </button>
               <XIcon
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
