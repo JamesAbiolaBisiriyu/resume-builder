@@ -87,44 +87,60 @@ const Dashboard = () => {
   };
 
   const uploadResume = async (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const file = dashboard.uploadFile;
+  const file = dashboard.uploadFile;
 
-    if (!file) {
-      toast.error("Please select a resume file");
+  if (!file) {
+    toast.error("Please select a resume file");
+    return;
+  }
+
+  if (!dashboard.uploadTitle?.trim()) {
+    toast.error("Please enter a resume title");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    // console.log("Step 1: Extracting PDF text...");
+    const resumeText = await pdfToText(file);
+    // console.log("Step 2: PDF extracted, length:", resumeText?.length);
+
+    if (!resumeText || resumeText.trim().length < 10) {
+      toast.error("Could not extract text from PDF. Please try a different file.");
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const resumeText = await pdfToText(file);
-
-      const { data } = await api.post(
-        "/api/ai/upload-resume",
-        {
-          title: dashboard.uploadTitle,
-          resumeText,
+    // console.log("Step 3: Sending to server...");
+    const { data } = await api.post(
+      "/api/ai/upload-resume",
+      {
+        title: dashboard.uploadTitle.trim(),
+        resumeText,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      },
+    );
 
-      dispatch({ type: "CLOSE_UPLOAD_MODAL" });
-      dispatch({ type: "SET_UPLOAD_FILE", payload: null });
-      dispatch({ type: "SET_UPLOAD_TITLE", payload: "" });
+    // console.log("Step 4: Server response:", data);
 
-      navigate(`/app/builder/${data.resumeId}`);
-    } catch (error) {
-      toast.error(error?.response?.data?.message || error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    dispatch({ type: "CLOSE_UPLOAD_MODAL" });
+    dispatch({ type: "SET_UPLOAD_FILE", payload: null });
+    dispatch({ type: "SET_UPLOAD_TITLE", payload: "" });
+
+    navigate(`/app/builder/${data.resumeId}`);
+  } catch (error) {
+    console.error("Upload error:", error);
+    toast.error(error?.response?.data?.message || error.message || "Upload failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const editTitle = async (event) => {
     event.preventDefault();
