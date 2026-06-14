@@ -1,10 +1,27 @@
 /* File Purpose: Global styles and shared utility styling used across the app. */
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+
+/*
+  FIX: Added &display=swap&font-display=block to force the browser to BLOCK
+  rendering (including print) until Outfit is loaded, preventing fallback-serif
+  PDFs. Also added preconnect links — add these to index.html <head> too:
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+*/
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=block");
 @import "tailwindcss";
 
 * {
   font-family: "Outfit", sans-serif;
 }
+
+/* Ensure Outfit is used during print — some browsers reset font-family in print */
+@media print {
+  * {
+    font-family: "Outfit", sans-serif !important;
+  }
+}
+
 @layer base {
   button {
     @apply cursor-pointer;
@@ -17,4 +34,15 @@
     @apply outline-none focus:ring border border-gray-300
         focus:ring-blue-500 focus:border-blue-500 rounded-lg resize-none;
   }
+}
+
+/* ── Scrollbar utility ──────────────────────────────────────────────────────
+   Used by the section chips row in ResumeBuilder mobile editor.
+   Hides scrollbar visually but keeps it functional. */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

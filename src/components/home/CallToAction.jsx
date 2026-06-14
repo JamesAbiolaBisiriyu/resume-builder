@@ -1,20 +1,51 @@
 // File Purpose: Home and resume-builder UI section component: CallToAction.
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
 
 const CallToAction = () => {
-  return (
-    <>
-    <div id="cta" className='mt-28 border-y border-dashed border-slate-200 w-full max-w-5xl mx-auto px-10 sm:px-16'>
-            <div className="flex flex-col md:flex-row text-center md:text-left items-center justify-between gap-8 px-3 md:px-10 border-x border-dashed border-slate-200 py-16 sm:py-20 -mt-10 -mb-10 w-full">
-                <p className="text-xl font-medium max-w-md text-slate-800">Build a Professional Resume That Helps You Stand Out and Get Hired.</p>
-                <a href="https://prebuiltui.com" className="flex items-center gap-2 rounded py-3 px-8 bg-green-600 hover:bg-green-700 transition text-white">
-                    <span> Get Started</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </a>
-            </div>
-        </div>
-      
-    </>
-  )
-}
+  const { user } = useSelector((state) => state.auth);
 
-export default CallToAction
+  return (
+    <div id="cta" className="px-6 md:px-16 lg:px-24 xl:px-40 my-24">
+      <div className="max-w-5xl mx-auto bg-gradient-to-br from-green-600 via-emerald-600 to-teal-500 rounded-3xl px-8 sm:px-14 py-16 text-center text-white relative overflow-hidden shadow-2xl shadow-green-200">
+        {/* Decorative blobs */}
+        <div className="absolute -top-12 -left-12 w-48 h-48 bg-white/10 rounded-full pointer-events-none" />
+        <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-white/10 rounded-full pointer-events-none" />
+
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 bg-white/15 text-white text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+            <Sparkles size={12} /> Free — no credit card needed
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-semibold leading-tight mb-4 max-w-xl mx-auto">
+            Your next job starts with a great resume
+          </h2>
+          <p className="text-green-100 max-w-md mx-auto mb-8 leading-relaxed">
+            Join thousands of job seekers who built their resume in minutes and landed interviews faster with AI.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+            <Link
+              to={user ? "/app" : "/app?state=register"}
+              className="flex items-center gap-2 bg-white text-green-700 font-semibold px-8 py-3.5 rounded-full hover:bg-green-50 active:scale-95 transition-all shadow-lg"
+            >
+              {user ? "Go to Dashboard" : "Build my resume now"}
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-green-100">
+            {["Free forever", "No credit card required", "Instant PDF download"].map((t) => (
+              <span key={t} className="flex items-center gap-1.5">
+                <CheckCircle size={13} className="text-green-300 shrink-0" /> {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CallToAction;

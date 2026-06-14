@@ -11,7 +11,9 @@ import {
   EyeOffIcon,
   FolderIcon,
   GraduationCap,
+  PencilIcon,
   Share2Icon,
+  SlidersHorizontal,
   Sparkles,
   User,
 } from "lucide-react";
@@ -29,24 +31,33 @@ import SkillForm from "../components/home/SkillForm.jsx";
 import { useSelector } from "react-redux";
 import api from "../configs/api";
 
+// ─── Mobile tab options ────────────────────────────────────────────────────────
+const MOBILE_TABS = [
+  { id: "edit", label: "Edit", icon: PencilIcon },
+  { id: "preview", label: "Preview", icon: EyeIcon },
+];
+
 const ResumeBuilder = () => {
   const { resumeId } = useParams();
   const { token } = useSelector((state) => state.auth);
   const { builder } = useAppState();
   const dispatch = useAppDispatch();
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  // "edit" | "preview" — mobile only
+  const [mobileTab, setMobileTab] = useState("edit");
 
   const sections = [
-    { id: "personal", name: "Personal Info", Icon: User },
-    { id: "summary", name: "Professional Summary", Icon: Sparkles },
-    { id: "experience", name: "Experience", Icon: Briefcase },
-    { id: "education", name: "Education", Icon: GraduationCap },
-    { id: "projects", name: "Projects", Icon: FolderIcon },
-    { id: "skills", name: "Skills", Icon: Sparkles },
+    { id: "personal",   name: "Personal Info",          Icon: User },
+    { id: "summary",    name: "Professional Summary",   Icon: Sparkles },
+    { id: "experience", name: "Experience",             Icon: Briefcase },
+    { id: "education",  name: "Education",              Icon: GraduationCap },
+    { id: "projects",   name: "Projects",               Icon: FolderIcon },
+    { id: "skills",     name: "Skills",                 Icon: Sparkles },
   ];
 
   const activeSection = sections[builder.activeSectionIndex];
 
+  // ── Load resume on mount ───────────────────────────────────────────────────
   useEffect(() => {
     if (resumeId && token) {
       const loadExistingResume = async () => {
@@ -54,174 +65,242 @@ const ResumeBuilder = () => {
           const { data } = await api.get(`/api/resumes/get/${resumeId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-
           if (data.resume) {
-            dispatch({
-              type: "INITIALIZE_BUILDER",
-              payload: {
-                resume: data.resume,
-              },
-            });
-
+            dispatch({ type: "INITIALIZE_BUILDER", payload: { resume: data.resume } });
             document.title = data.resume.title;
           }
         } catch (error) {
           toast.error(error.response?.data?.message || error.message);
         }
       };
-
       loadExistingResume();
     }
   }, [resumeId, token, dispatch]);
 
+  // ── Actions ────────────────────────────────────────────────────────────────
   const changeResumeVisibility = async () => {
     try {
       const newVisibility = !builder.draftResume.public;
-
       const { data } = await api.put(
         "/api/resumes/update",
-        {
-          resumeId,
-          resumeData: {
-            public: newVisibility,
-          },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { resumeId, resumeData: { public: newVisibility } },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-
-      dispatch({
-        type: "UPDATE_DRAFT_RESUME",
-        payload: {
-          public: newVisibility,
-        },
-      });
-
+      dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { public: newVisibility } });
       toast.success(data.message);
     } catch (error) {
-      console.error("Error saving resume:", error);
       toast.error(error.response?.data?.message || error.message);
     }
   };
 
   const saveResume = async () => {
-  try {
-    const updatedResumeData = structuredClone(builder.draftResume);
-
-    // Remove File object from JSON data
-    if (
-      updatedResumeData.personal_info?.image instanceof File
-    ) {
-      delete updatedResumeData.personal_info.image;
-    }
-
-    const formData = new FormData();
-
-    formData.append("resumeId", resumeId);
-    formData.append(
-      "resumeData",
-      JSON.stringify(updatedResumeData)
-    );
-
-    // Send image separately
-    if (
-      builder.draftResume.personal_info?.image instanceof File
-    ) {
-      formData.append(
-        "image",
-        builder.draftResume.personal_info.image
-      );
-    }
-
-    const { data } = await api.put(
-      "/api/resumes/update",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      const updatedResumeData = structuredClone(builder.draftResume);
+      if (updatedResumeData.personal_info?.image instanceof File) {
+        delete updatedResumeData.personal_info.image;
       }
-    );
-
-    toast.success(data.message || "Resume saved");
-  } catch (error) {
-    toast.error(
-      error.response?.data?.message || error.message
-    );
-  }
-};
+      const formData = new FormData();
+      formData.append("resumeId", resumeId);
+      formData.append("resumeData", JSON.stringify(updatedResumeData));
+      if (builder.draftResume.personal_info?.image instanceof File) {
+        formData.append("image", builder.draftResume.personal_info.image);
+      }
+      const { data } = await api.put("/api/resumes/update", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(data.message || "Resume saved");
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  };
 
   const handleShare = () => {
-    // Implement share functionality here (e.g., generate shareable link, open share modal, etc.)
-    const frontendUrl = window.location.href.split("/app")[0];
-    const resumeUrl = frontendUrl + "/view/" + resumeId;
-
+    const frontendUrl = window.location.origin;
+    const resumeUrl = `${frontendUrl}/view/${resumeId}`;
     if (navigator.share) {
       navigator.share({ url: resumeUrl, text: "My Resume" });
     } else {
-      // Fallback: copy to clipboard
-      alert("Sharing not supported. Please copy the link manually.");
+      navigator.clipboard?.writeText(resumeUrl).then(() =>
+        toast.success("Link copied to clipboard!")
+      ).catch(() =>
+        toast.error("Could not copy link. Please copy manually: " + resumeUrl)
+      );
     }
   };
 
-  const downloadResume = () => {
-    setShowPrintPreview(true);
-  };
+  const downloadResume = () => setShowPrintPreview(true);
+  const handlePrintResume = () => window.print();
 
-  const handlePrintResume = () => {
-    window.print();
-  };
+  // ── Progress bar width ─────────────────────────────────────────────────────
+  const progressPct = Math.round(
+    ((builder.activeSectionIndex) / (sections.length - 1)) * 100
+  );
+
+  // ── Action buttons (shared between mobile + desktop) ───────────────────────
+  const ActionButtons = () => (
+    <div className="flex items-center gap-2 flex-wrap">
+      {builder.draftResume.public && (
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-lg border border-blue-200 hover:border-blue-300 transition-colors"
+        >
+          <Share2Icon className="size-3.5" /> Share
+        </button>
+      )}
+      <button
+        onClick={changeResumeVisibility}
+        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-gradient-to-br from-purple-50 to-purple-100 text-purple-600 border border-purple-200 rounded-lg hover:border-purple-300 transition-colors"
+      >
+        {builder.draftResume.public
+          ? <><EyeIcon className="size-3.5" /> Public</>
+          : <><EyeOffIcon className="size-3.5" /> Private</>
+        }
+      </button>
+      <button
+        onClick={downloadResume}
+        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-gradient-to-br from-green-50 to-green-100 text-green-600 border border-green-200 rounded-lg hover:border-green-300 transition-colors"
+      >
+        <DownloadIcon className="size-3.5" /> Download
+      </button>
+    </div>
+  );
 
   return (
-    <div>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <Link
-          to={"/app"}
-          className="inline-flex gap-2 items-center text-slate-500
-        hover:text-slate-700 transition-all"
-        >
-          <ArrowLeftIcon className="size-4" />
-          Back to Dashboard
-        </Link>
+    <div className="min-h-screen bg-slate-50">
+
+      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+          {/* Back */}
+          <Link
+            to="/app"
+            className="inline-flex shrink-0 gap-1.5 items-center text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeftIcon className="size-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+
+          {/* Resume title */}
+          <p className="text-sm font-medium text-slate-700 truncate max-w-[160px] sm:max-w-xs">
+            {builder.draftResume.title || "Untitled Resume"}
+          </p>
+
+          {/* Desktop actions — visible only on desktop */}
+          <div className="hidden md:flex items-center gap-2">
+            <ActionButtons />
+          </div>
+
+          {/* Mobile: compact action strip icons */}
+          <div className="flex md:hidden items-center gap-1">
+            <button
+              onClick={downloadResume}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition"
+              aria-label="Download"
+            >
+              <DownloadIcon className="size-4" />
+            </button>
+            <button
+              onClick={changeResumeVisibility}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition"
+              aria-label="Toggle visibility"
+            >
+              {builder.draftResume.public
+                ? <EyeIcon className="size-4" />
+                : <EyeOffIcon className="size-4" />
+              }
+            </button>
+            {builder.draftResume.public && (
+              <button
+                onClick={handleShare}
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition"
+                aria-label="Share"
+              >
+                <Share2Icon className="size-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="grid lg:grid-cols-12 gap-8">
-          <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 pt-1">
-              <hr className="absolute top-0 left-0 right-0 border-2 border-gray-200" />
-              <hr
-                className="absolute top-0 left-0 h-1 bg-linear-to-r from-green-500 to bg-green-600 border-none transition-all duration-2000"
-                style={{
-                  width: `${(builder.activeSectionIndex * 100) / sections.length - 1}%`,
-                }}
+
+      {/* ── Mobile tab toggle ──────────────────────────────────────────────── */}
+      <div className="md:hidden sticky top-14 z-20 bg-white border-b border-slate-200 px-4">
+        <div className="flex gap-0">
+          {MOBILE_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const active = mobileTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setMobileTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  active
+                    ? "border-green-500 text-green-600"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                <Icon className="size-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Progress bar (mobile, inside edit tab) */}
+        {mobileTab === "edit" && (
+          <div className="pb-2 pt-1">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span>{activeSection.name}</span>
+              <span>{builder.activeSectionIndex + 1} / {sections.length}</span>
+            </div>
+            <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
               />
-              {/* =========================Section Navigation ============ */}
-              <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
-                <div className="flex items-center gap-2">
-                  <TemplateSelector
-                    selectedTemplate={builder.draftResume.template}
-                    onChange={(template) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { template },
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    selectedColor={builder.draftResume.accent_color}
-                    onChange={(color) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { accent_color: color },
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex  items-center gap-2">
-                  {builder.activeSectionIndex !== 0 && (
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Main content area ─────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 py-5 pb-10">
+        <div className="grid lg:grid-cols-12 gap-6">
+
+          {/* ── LEFT PANEL: Editor ─────────────────────────────────────────── */}
+          {/* On mobile: only shown when mobileTab === "edit" */}
+          <div className={`lg:col-span-5 ${mobileTab === "preview" ? "hidden md:block" : "block"} min-w-0`}>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+              {/* Progress bar (desktop) */}
+              <div className="hidden md:block h-1 bg-slate-100">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+
+              <div className="p-5 pt-4">
+
+                {/* Section nav header */}
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
+                  {/* Template + colour pickers */}
+                  <div className="flex items-center gap-2">
+                    <TemplateSelector
+                      selectedTemplate={builder.draftResume.template}
+                      onChange={(template) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { template } })
+                      }
+                    />
+                    <ColorPicker
+                      selectedColor={builder.draftResume.accent_color}
+                      onChange={(color) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { accent_color: color } })
+                      }
+                    />
+                  </div>
+
+                  {/* Prev / Next */}
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() =>
                         dispatch({
@@ -229,195 +308,194 @@ const ResumeBuilder = () => {
                           payload: Math.max(builder.activeSectionIndex - 1, 0),
                         })
                       }
-                      className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
                       disabled={builder.activeSectionIndex === 0}
+                      className="flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
                     >
-                      <ChevronLeft className="size-4" /> Previous
+                      <ChevronLeft className="size-3.5" /> Prev
                     </button>
+                    <button
+                      onClick={() =>
+                        dispatch({
+                          type: "SET_ACTIVE_SECTION",
+                          payload: Math.min(builder.activeSectionIndex + 1, sections.length - 1),
+                        })
+                      }
+                      disabled={builder.activeSectionIndex === sections.length - 1}
+                      className="flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
+                    >
+                      Next <ChevronRight className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section tab chips — scrollable row on mobile */}
+                <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4 scrollbar-none">
+                  {sections.map((section, i) => {
+                    const Icon = section.Icon;
+                    const active = builder.activeSectionIndex === i;
+                    return (
+                      <button
+                        key={section.id}
+                        onClick={() =>
+                          dispatch({ type: "SET_ACTIVE_SECTION", payload: i })
+                        }
+                        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          active
+                            ? "bg-green-500 text-white shadow-sm shadow-green-200"
+                            : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                        }`}
+                      >
+                        <Icon className="size-3" />
+                        {section.name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active form */}
+                <div className="w-full overflow-hidden">
+                  {activeSection.id === "personal" && (
+                    <PersonalInfoForm
+                      data={builder.draftResume.personal_info}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { personal_info: data } })
+                      }
+                      removeBackground={builder.removeBackground}
+                      setRemoveBackground={(value) =>
+                        dispatch({
+                          type: "SET_REMOVE_BACKGROUND",
+                          payload: typeof value === "function" ? value(builder.removeBackground) : value,
+                        })
+                      }
+                    />
                   )}
+                  {activeSection.id === "summary" && (
+                    <ProfessionalSummaryForm
+                      data={builder.draftResume.professional_summary}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { professional_summary: data } })
+                      }
+                    />
+                  )}
+                  {activeSection.id === "experience" && (
+                    <ExperienceForm
+                      data={builder.draftResume.experience}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { experience: data } })
+                      }
+                    />
+                  )}
+                  {activeSection.id === "education" && (
+                    <EducationForm
+                      data={builder.draftResume.education}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { education: data } })
+                      }
+                    />
+                  )}
+                  {activeSection.id === "projects" && (
+                    <ProjectForm
+                      data={builder.draftResume.projects}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { projects: data } })
+                      }
+                    />
+                  )}
+                  {activeSection.id === "skills" && (
+                    <SkillForm
+                      data={builder.draftResume.skills}
+                      onChange={(data) =>
+                        dispatch({ type: "UPDATE_DRAFT_RESUME", payload: { skills: data } })
+                      }
+                    />
+                  )}
+                </div>
+
+                {/* Save + mobile preview CTA */}
+                <div className="flex items-center gap-3 mt-6 pt-5 border-t border-slate-100">
                   <button
                     onClick={() =>
-                      dispatch({
-                        type: "SET_ACTIVE_SECTION",
-                        payload: Math.min(
-                          builder.activeSectionIndex + 1,
-                          sections.length - 1,
-                        ),
+                      toast.promise(saveResume(), {
+                        loading: "Saving…",
+                        success: "Saved!",
+                        error: "Failed to save",
                       })
                     }
-                    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${builder.activeSectionIndex === sections.length - 1 && "opacity-50"}`}
-                    disabled={
-                      builder.activeSectionIndex === sections.length - 1
-                    }
+                    className="flex-1 sm:flex-none bg-gradient-to-br from-green-100 to-green-200 ring-1 ring-green-300 text-green-700 hover:ring-green-400 transition-all rounded-lg px-6 py-2.5 text-sm font-medium"
                   >
-                    Next <ChevronRight className="size-4" />
+                    Save Changes
+                  </button>
+
+                  {/* Mobile shortcut to preview */}
+                  <button
+                    onClick={() => setMobileTab("preview")}
+                    className="md:hidden flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+                  >
+                    <EyeIcon className="size-4" /> Preview
                   </button>
                 </div>
               </div>
-
-              <div className="space-y-6">
-                {activeSection.id === "personal" && (
-                  <PersonalInfoForm
-                    data={builder.draftResume.personal_info}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: {
-                          personal_info: data,
-                        },
-                      })
-                    }
-                    removeBackground={builder.removeBackground}
-                    setRemoveBackground={(value) =>
-                      dispatch({
-                        type: "SET_REMOVE_BACKGROUND",
-                        payload:
-                          typeof value === "function"
-                            ? value(builder.removeBackground)
-                            : value,
-                      })
-                    }
-                  />
-                )}
-                {activeSection.id === "summary" && (
-                  <ProfessionalSummaryForm
-                    data={builder.draftResume.professional_summary}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { professional_summary: data },
-                      })
-                    }
-                  />
-                )}
-                {activeSection.id === "experience" && (
-                  <ExperienceForm
-                    data={builder.draftResume.experience}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { experience: data },
-                      })
-                    }
-                    // setResumeData={dispatch}
-                  />
-                )}
-                {activeSection.id === "education" && (
-                  <EducationForm
-                    data={builder.draftResume.education}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { education: data },
-                      })
-                    }
-                    // setResumeData={dispatch}
-                  />
-                )}
-                {activeSection.id === "projects" && (
-                  <ProjectForm
-                    data={builder.draftResume.projects}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { projects: data },
-                      })
-                    }
-                    // setResumeData={dispatch}
-                  />
-                )}
-                {activeSection.id === "skills" && (
-                  <SkillForm
-                    data={builder.draftResume.skills}
-                    onChange={(data) =>
-                      dispatch({
-                        type: "UPDATE_DRAFT_RESUME",
-                        payload: { skills: data },
-                      })
-                    }
-                    // setResumeData={dispatch}
-                  />
-                )}
-              </div>
-              <button
-                onClick={() =>
-                  toast.promise(saveResume(), {
-                    loading: "Saving...",
-                    success: "Saved successfully",
-                    error: "Failed to save",
-                  })
-                }
-                className="bg-linear-to-br from-green-100 to bg-green-200 ring-green-300 text-green-600 ring hover:ring-green-400 transition-all rounded-md px-6 py-2 mt-6 text-sm"
-              >
-                Save Changes
-              </button>
             </div>
           </div>
-          {/* Right Panel - Preview  */}
-          <div className="lg:col-span-7 max-lg:mt-6">
-            <div className="relative w-full">
-              <div className="absolute bottom-3 left-0 right-0 flex items-center justify-end gap-2">
-                {builder.draftResume.public && (
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center p-2 px-4 gap-2 text-xs bg-linear-to-br from-blue-100 to-blue-200 text-blue-600 rounded-lg ring-blue-300 hover:ring-blue-400 transition-colors"
-                  >
-                    <Share2Icon className="size-4" /> Share
-                  </button>
-                )}
-                <button
-                  onClick={changeResumeVisibility}
-                  className="flex items-center p-2 px-4 gap-2 text-xs bg-linear-to-br from-purple-100 to-purple-200 text-purple-600 ring-purple-300 rounded-lg hover:ring-purple-400 transition-colors"
-                >
-                  {builder.draftResume.public ? (
-                    <EyeIcon className="size-4" />
-                  ) : (
-                    <EyeOffIcon className="size-4" />
-                  )}
-                  {builder.draftResume.public ? "Public" : "Private"}
-                </button>
-                <button
-                  onClick={downloadResume}
-                  className="flex items-center gap-2 px-6 py-2 text-xs bg-linear-to-br from-green-100 to-green-200 text-green-600 rounded-lg ring-green-300 hover:ring-green-400 transition-colors"
-                >
-                  <DownloadIcon className="size-4" /> Download
-                </button>
-              </div>
+
+          {/* ── RIGHT PANEL: Preview ──────────────────────────────────────── */}
+          {/* On mobile: only shown when mobileTab === "preview" */}
+          <div className={`lg:col-span-7 ${mobileTab === "edit" ? "hidden md:block" : "block"} min-w-0`}>
+
+            {/* Preview action bar — only visible on mobile (preview tab) */}
+            <div className="flex md:hidden items-center justify-between mb-3 flex-wrap gap-2">
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Live Preview</p>
+              <ActionButtons />
             </div>
+
+            {/* Desktop: simple label only (actions are in top bar) */}
+            <div className="hidden md:flex items-center justify-between mb-3 flex-wrap gap-2">
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Live Preview</p>
+            </div>
+
             {builder.draftResume && (
-              <ResumePreview
-                data={builder.draftResume}
-                template={builder.draftResume.template}
-                accentColor={builder.draftResume.accent_color}
-                previewId="resume-preview-main"
-              />
+              <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+                <ResumePreview
+                  data={builder.draftResume}
+                  template={builder.draftResume.template}
+                  accentColor={builder.draftResume.accent_color}
+                  previewId="resume-preview-main"
+                />
+              </div>
             )}
+
+            {/* Mobile: back to edit button below preview */}
+            <div className="md:hidden mt-4 flex justify-center">
+              <button
+                onClick={() => setMobileTab("edit")}
+                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors border border-slate-200 rounded-full px-5 py-2"
+              >
+                <SlidersHorizontal className="size-4" /> Back to editing
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Print / PDF preview modal ──────────────────────────────────────── */}
       {showPrintPreview && builder.draftResume && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 p-4 sm:p-8 overflow-y-auto">
           <div className="mx-auto max-w-5xl space-y-4">
             <div className="flex items-center justify-between rounded-2xl bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Print preview
-                </h2>
+                <h2 className="text-sm font-semibold text-slate-900">Print preview</h2>
                 <p className="text-xs text-slate-500">
-                  Use Print, then choose Save as PDF in the browser dialog.
+                  Use Print, then choose <strong>Save as PDF</strong> in the browser dialog.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  type="button"
                   onClick={() => setShowPrintPreview(false)}
                   className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
                 >
                   Close
                 </button>
                 <button
-                  type="button"
                   onClick={handlePrintResume}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800"
                 >

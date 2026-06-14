@@ -1,5 +1,3 @@
-
-
 // File Purpose: Home and resume-builder UI section component: ExperienceForm.
 import { useState } from "react";
 import { Briefcase, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
@@ -20,9 +18,18 @@ const parseDateValue = (val = "") => {
   return { year, month };
 };
 
+// FIX: previously this returned "" whenever year OR month was missing —
+// so selecting "May" with no year yet produced buildDateValue("", "05") => "",
+// which reset BOTH dropdowns back to their placeholders on every change.
+// Now it builds a partial value ("2025" or "-05") so each selection is
+// preserved while the user fills in the other field. normalizeDateToYYYYMM()
+// on the backend already tolerates a lone "YYYY" (defaults to -01), and a
+// partial "-05" value just renders as blank in the preview until completed.
 const buildDateValue = (year, month) => {
-  if (!year || !month) return "";
-  return `${year}-${month}`;
+  if (year && month) return `${year}-${month}`;
+  if (year) return year;
+  if (month) return `-${month}`;
+  return "";
 };
 
 const DateSelect = ({ value, onChange, disabled }) => {
@@ -270,4 +277,3 @@ const ExperienceForm = ({ data, onChange }) => {
 };
 
 export default ExperienceForm;
-
