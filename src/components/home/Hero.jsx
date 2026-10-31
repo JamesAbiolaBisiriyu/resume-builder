@@ -113,9 +113,16 @@ const Hero = () => {
         {/* ── Navbar ─────────────────────────────────────────────────────── */}
         <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-sm">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Resume Builder logo" className="h-11 w-auto" />
-          </Link>
+          {/* <Link to="/" className="flex items-center gap-2">
+            <img src="/Logo1.png" alt="Resume Builder logo" className="h-11 w-auto" />
+          </Link> */}
+      <Link to="/" className="flex items-center gap-2">
+  <img 
+    src="/Logo1.png" 
+    alt="Resume Builder logo" 
+    className="h-24 sm:h-28 md:h-32 lg:h-36 xl:h-40 2xl:h-44 w-auto" 
+  />
+</Link>
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8 text-slate-700">
@@ -208,7 +215,7 @@ const Hero = () => {
               {/* Headline */}
               <h1 className="text-5xl md:text-6xl font-semibold max-w-xl mx-auto lg:mx-0 leading-[1.12] tracking-tight text-slate-900 mb-5">
                 Land your dream job with{" "}
-                <span className="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
                   AI-powered
                 </span>{" "}
                 resumes.
@@ -228,12 +235,12 @@ const Hero = () => {
                   <ArrowRight size={16} />
                 </Link>
                 <Link
-                  to={user ? `/view/${user?.resumeId || ""}` : "/app?state=register"}
-                  className="flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-full px-7 h-12 active:scale-95 transition-all"
-                >
-                  <Play size={14} className="fill-slate-600 stroke-slate-600" />
-                  <span>See example resume</span>
-                </Link>
+  to="/view/6a844cf00a7d3dc6c3a83a46"
+  className="flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-full px-7 h-12 active:scale-95 transition-all"
+>
+  <Play size={14} className="fill-slate-600 stroke-slate-600" />
+  <span>See example resume</span>
+</Link>
               </div>
 
               {/* Trust badges */}

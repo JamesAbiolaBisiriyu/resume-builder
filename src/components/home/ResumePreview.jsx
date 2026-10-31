@@ -34,16 +34,33 @@ function ensurePrintStyles(previewId) {
       #${previewId},
       #${previewId} * { visibility: visible; }
 
+      /* Resume print modal overrides */
+      #resume-print-modal {
+        position: static !important;
+        inset: auto !important;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+      }
+
+      #resume-print-modal > div {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+      }
+
       /* Position resume at top-left, full width, auto height.
          Do NOT set height: 11in — that silently clips multi-page resumes. */
       #${previewId} {
-        position: fixed;
-        inset: 0;
-        width: 8.5in;
-        height: auto;
-        margin: 0;
-        padding: 0;
-        overflow: visible;
+        position: static !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
         box-shadow: none !important;
         border: none !important;
         background: white !important;
@@ -96,7 +113,10 @@ const ResumePreview = ({
     <div className="w-full bg-gray-100">
       <div
         id={previewId}
-        className={"border border-gray-200 print:shadow-none print:border-none " + classes}
+        className={
+          "border border-gray-200 print:shadow-none print:border-none " +
+          classes
+        }
       >
         {renderTemplate()}
       </div>

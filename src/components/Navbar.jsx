@@ -19,8 +19,13 @@ const Navbar = () => {
     <div className="shadow bg-white">
       <nav className="flex items-center justify-between max-w-7xl mx-auto px-4 py-3.5
       text-slate-800 transition-all ">
-        <Link to=''>
-        <img src="/logo.svg" alt="logo" className="h-11 w-auto" />
+        <Link to='/'>
+        {/* <img src="/logo.svg" alt="logo" className="h-11 w-auto" /> */}
+        
+        {/* <img src="/Logo1.png" alt="logo" className="h-11 w-auto" /> */}
+        <img src="/Logo1.png" alt="logo" className="h-24 sm:h-28 md:h-32 lg:h-36 xl:h-40 2xl:h-44 w-auto" />
+
+
         </Link>
         <div className="flex items-center gap-4 text-sm">
           

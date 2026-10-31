@@ -1,5 +1,6 @@
 // File Purpose: Home and resume-builder UI section component: Footer.
 // import logo from "../../assets/templates/logo.svg";
+// import logo from "../../assets/logo.svg";
 import Logo1 from "../../assets/Logo1.png";
 
 const Footer = () => {
@@ -13,8 +14,8 @@ const Footer = () => {
                 }
             `}</style>
 
-      <footer className="flex flex-wrap justify-center lg:justify-between overflow-hidden gap-10 md:gap-20 py-16 px-6 md:px-16 lg:px-24 xl:px-32 text-[13px] text-gray-500 bg-gradient-to-r from-white via-green-200/60 to white mt-40">
-        <div className="flex flex-wrap items-start gap-10 md:gap-[60px] xl:gap-[140px]">
+      <footer className="flex flex-wrap justify-center lg:justify-between overflow-hidden gap-10 md:gap-20 py-16 px-6 md:px-16 lg:px-24 xl:px-32 text-[13px] text-gray-500 bg-linear-to-r from-white via-green-200/60 to white mt-40">
+        <div className="flex flex-wrap items-start gap-10 md:gap-15 xl:gap-35">
           <a href="#">
             <img src={Logo1} alt="logo" className="h-30 w-auto" />
           </a>
@@ -98,11 +99,7 @@ const Footer = () => {
             audience.
           </p>
           <div className="flex items-center gap-4 mt-3">
-            <a
-              href="https://dribbble.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href="https://dribbble.com/" target="_blank" rel="noreferrer">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -162,11 +159,7 @@ const Footer = () => {
                 <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
               </svg>
             </a>
-            <a
-              href="https://www.youtube.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href="https://www.youtube.com/" target="_blank" rel="noreferrer">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
